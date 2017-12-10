@@ -116,12 +116,34 @@ router.put('/user/:id', (req, res) => {
         }
     }).then((user) => {
         if(user){
-        user.updateAttributes({
-            //title: req.body.title,
-            //complete: req.body.complete
-        }).then((user) => {
-            res.send(user);
-        });
+            if (req.body.city && req.body.state) {
+                req.body.city = req.body.city.replace(/\b\w/g, l => l.toUpperCase());
+                req.body.state = req.body.state.toUpperCase();
+                models.City.findOne({
+                    where: {city: req.body.city, state: req.body.state},
+                    attributes: ['id']
+                }).then((city) => {
+                    if (city && city.id) {
+                        console.log('id es ', city.id);
+                        user.updateAttributes({
+                            first_name: req.body.first_name,
+                            last_name: req.body.last_name,
+                            cityId: city.id
+                        }).then((user) => {
+                            res.json(user);
+                        });
+                    } else {
+                        res.sendStatus(500);
+                    }
+                });
+            } else {
+                user.updateAttributes({
+                    first_name: req.body.first_name,
+                    last_name: req.body.last_name
+                }).then((user) => {
+                    res.json(user);
+                });
+            }
         }
     });
 });
