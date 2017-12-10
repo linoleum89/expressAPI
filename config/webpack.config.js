@@ -14,7 +14,6 @@ module.exports = {
   entry: [
     'webpack-hot-middleware/client?reload=true',
     path.join(__dirname, '/../app/src/main.js'),
-    //path.join(__dirname, '/../app/src/main.jsx'),
   ],
   output: {
     path: path.join(__dirname, '/../dist/'),
@@ -25,32 +24,15 @@ module.exports = {
   module: {
     rules: [{
       exclude: /node_modules/,
-      test: /\.js$/,
-      //test: /\.jsx$/,
-      use: [
-      //   {
-      //   loader: 'babel-loader',
-      //   options: {
-      //     //presets: ['latest'],
-      //     presets: ['react','es2015'],
-      //     //presets: ['@babel/preset-env']
-      //   },
-      // }
-    
-      {
+      test: /\.jsx$/,
+      use: [{
         loader: 'babel-loader',
         options: {
-          presets: ['react'],
-          // This is a feature of `babel-loader` for webpack (not Babel itself).
-          // It enables caching results in ./node_modules/.cache/babel-loader/
-          // directory for faster rebuilds.
-          cacheDirectory: true,
+          presets: ['latest'],
         },
-      },
-    ],
+      }],
     }, {
-      //test: /\.scss/,
-      test: /\.css/,
+      test: /\.scss/,
       use: [
         'style-loader', {
           loader: 'css-loader',
