@@ -1,0 +1,20 @@
+{
+  "items": [
+    {
+      "name": "Fight For The Right To Party",
+      "checked": false
+    }, {
+      "name": "Through The Fire And Flames",
+      "checked": true
+    }, {
+      "name": "Board The Train Of Consequences",
+      "checked": false
+    }, {
+      "name": "Pick Up Car At Hangar 18",
+      "checked": true
+    }, {
+      "name": "Seek And Destroy All Bugs",
+      "checked": true
+    }
+  ]
+}
