@@ -82,7 +82,13 @@ router.post('/users', (req, res) => {
                 last_name: req.body.last_name,
                 cityId: city.id
             }).then((user) => {
-                res.json(user);    
+                res.json({
+                    id: user.id,
+                    first_name: user.first_name,
+                    last_name: user.last_name,
+                    city: req.body.city,
+                    state: req.body.state
+                });    
             });
         } else {
             res.sendStatus(500);
