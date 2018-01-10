@@ -2,39 +2,37 @@ const express = require('express');
 const router = express.Router();
 const models = require('../models/index');
 const Promise = require('bluebird');
-
-// router.get('/users', (req, res) => {
-//     models.User.findAll({}).then((users) => {
-//         const promises = [];
-//         users.map((user) => {
-//             const thePromise = new Promise((resolve) => {
-//                 models.City.findOne({
-//                     where: {id: user.cityId},
-//                     attributes: ['city', 'state']
-//                   }).then(city => {
-//                         resolve({
-//                             id: user.id,
-//                             first_name: user.first_name,
-//                             last_name: user.last_name,
-//                             city: city.city,
-//                             state: city.state
-//                         });
-//                   })
-//             })
-//             promises.push(thePromise);
-//         });
-
-//         Promise.all(promises).then((result) => {
-//             res.json(result);
-//         });
-//     });
-// });
+const { coroutine } = Promise;
 
 router.get('/users', (req, res) => {
-    Promise.coroutine(function* () {
+    // return coroutine(function* () {
+    //     const users = yield models.User.findAll({});
+    //     if (users) {
+    //         users.map((user) => {
+    //             const city = yield models.City.findOne({
+    //                 where: { id: user.cityId },
+    //                 attributes: ['city', 'state']
+    //             });
+
+    //             return {
+    //                 id: user.id,
+    //                 first_name: user.first_name,
+    //                 last_name: user.last_name,
+    //                 city: city.city,
+    //                 state: city.state
+    //             };
+    //         });
+    //         res.json(users);
+    //     } else {
+    //         res.sendStatus(404);
+    //     }
+    // })();
+
+
+    return coroutine(function* () {
         return yield models.User.findAll({});
     })().map((user) => {
-        return Promise.coroutine(function* () {
+        return coroutine(function* () {
             const city = yield models.City.findOne({
                 where: { id: user.cityId },
                 attributes: ['city', 'state']
@@ -54,138 +52,90 @@ router.get('/users', (req, res) => {
 
 
 router.post('/users', (req, res) => {
+    return coroutine(function* () {
 
-    if (req.body) {
-        req.body.city = req.body.city.replace(/\b\w/g, l => l.toUpperCase());
-        req.body.state = req.body.state.toUpperCase();
-    }
+        if (req.body) {
+            req.body.city = req.body.city.replace(/\b\w/g, l => l.toUpperCase()); //Chihuahua
+            req.body.state = req.body.state.toUpperCase(); //CUU
+        }
 
-    // const City = Promise.coroutine(function* () {
-    //     const result = yield models.City.findOne({
-    //         where: {city: req.body.city, state: req.body.state},
-    //         attributes: ['id']
-    //     });
-    //     return result;
-    // });
+        const city = yield models.City.findOne({
+            where: {city: req.body.city, state: req.body.state},
+            attributes: ['id']
+        });
 
-    // console.log(City());
-    // res.sendStatus(200);
-
-    models.City.findOne({
-        where: { city: req.body.city, state: req.body.state },
-        attributes: ['id']
-    }).then((city) => {
-        if (city && city.id) {
-            console.log('id es ', city.id);
-            models.User.create({
-                first_name: req.body.first_name,
-                last_name: req.body.last_name,
-                cityId: city.id
-            }).then((user) => {
-                res.json({
-                    id: user.id,
-                    first_name: user.first_name,
-                    last_name: user.last_name,
-                    city: req.body.city,
-                    state: req.body.state
-                });
-            });
-        } else {
+        if (!city && !city.id) { 
             res.sendStatus(500);
         }
-    });
+        
+        const user = yield models.User.create({
+            first_name: req.body.first_name,
+            last_name: req.body.last_name,
+            cityId: city.id
+        });
+
+        res.json({
+            id: user.id,
+            first_name: user.first_name,
+            last_name: user.last_name,
+            city: req.body.city,
+            state: req.body.state
+        });
+    })();
 });
 
 router.delete('/user/:id', (req, res) => {
-    models.User.destroy({
-        where: {
-            id: req.params.id
+    return coroutine(function* () {
+        const user = yield models.User.destroy({
+            where: {
+                id: req.params.id
+            }
+        });
+
+        if (user) {
+            res.json(user);
         }
-    }).then((user) => {
-        res.json(user);
-    });
+    })();
 });
 
 router.put('/user/:id', (req, res) => {
-    console.log(req);
-    models.User.find({
-        where: {
-            id: req.params.id
-        }
-    }).then((user) => {
-        if(user){
-            if (req.body.city && req.body.state) {
-                req.body.city = req.body.city.replace(/\b\w/g, l => l.toUpperCase());
-                req.body.state = req.body.state.toUpperCase();
-                models.City.findOne({
-                    where: {city: req.body.city, state: req.body.state},
-                    attributes: ['id']
-                }).then((city) => {
-                    if (city && city.id) {
-                        console.log('id es ', city.id);
-                        user.updateAttributes({
-                            first_name: req.body.first_name,
-                            last_name: req.body.last_name,
-                            cityId: city.id
-                        }).then((user) => {
-                            res.json(user);
-                        });
-                    } else {
-                        res.sendStatus(500);
-                    }
-                });
-            } else {
-                user.updateAttributes({
-                    first_name: req.body.first_name,
-                    last_name: req.body.last_name
-                }).then((user) => {
-                    res.json(user);
-                });
+    return coroutine(function* () {
+        const user = yield models.User.find({
+            where: {
+                id: req.params.id
             }
-        }
-    });
-});
+        });
 
-// router.put('/user/:id', (req, res) => {
-//     //console.log(req);
-//     Promise.coroutine(function* () {
-//         const user = yield models.User.find({
-//             where: {
-//                 id: req.params.id
-//             }
-//         });
+        if (req.body.city && req.body.state) {
+            req.body.city = req.body.city.replace(/\b\w/g, l => l.toUpperCase());
+            req.body.state = req.body.state.toUpperCase();
 
-//         if (req.body.city && req.body.state) {
-//             req.body.city = req.body.city.replace(/\b\w/g, l => l.toUpperCase());
-//             req.body.state = req.body.state.toUpperCase();
-
-//             const city = yield models.City.findOne({
-//                 where: { city: req.body.city, state: req.body.state },
-//                 attributes: ['id']
-//             });
+            const city = yield models.City.findOne({
+                where: { city: req.body.city, state: req.body.state },
+                attributes: ['id']
+            });
                 
-//             if (city && city.id) {
-//                 console.log('id es ', city.id);
-//                 user.updateAttributes({
-//                     first_name: req.body.first_name,
-//                     last_name: req.body.last_name,
-//                     cityId: city.id
-//                 }).then((user) => {
-//                     res.json(user);
-//                 });
-//             } else {
-//                 res.sendStatus(500);
-//             }
-//         } else {
-//             user.updateAttributes({
-//                 first_name: req.body.first_name,
-//                 last_name: req.body.last_name
-//             }).then((user) => {
-//                 res.json(user);
-//             });
-//         }
-//     });
-// });
+            if (city && city.id) {
+                console.log('id es ', city.id);
+                yield user.updateAttributes({
+                    first_name: req.body.first_name,
+                    last_name: req.body.last_name,
+                    cityId: city.id
+                });
+
+                res.json(user);
+            } else {
+                res.sendStatus(500);
+            }
+        } else {
+            yield user.updateAttributes({
+                first_name: req.body.first_name,
+                last_name: req.body.last_name
+            });
+            res.json(user);
+        }
+    })();
+});
 
 router.post('/cities', function (req, res) {
     models.City.create({
